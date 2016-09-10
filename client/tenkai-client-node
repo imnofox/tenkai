@@ -2,17 +2,17 @@
 
 var args = process.argv.slice(2);
 
-if (args.length === 0) {
-	// No command line arguments specified.
-	console.error("Usage: tenkai-client-node [phone ip] [filename]");
+if (args.length < 2) {
+	// Not enough command line arguments specified.
+	console.error("Usage: tenkai-client-node <phone ip> <filename> [--watch]");
 	process.exit(-1);
 }
 
 var TenkaiClient = require("./tenkai-client");
 var client = new TenkaiClient(args[0]);
+var watching = args[2] == "--watch";
 
-client.connect(function() {
-	client.identify();
+var callback = function() {
 	try {
 		client.send(args[1], function() {
 			console.log("[+] Operation succeeded. Leaving...");
@@ -21,5 +21,14 @@ client.connect(function() {
 	} catch (e) {
 		console.error("[-] " + e);
 		client.leave();
+	}
+};
+
+client.connect(function() {
+	client.identify();
+	if (watching) {
+		require('fs').watch(args[1], callback);
+	} else {
+		callback();
 	}
 });
